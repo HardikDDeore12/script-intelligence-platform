@@ -25,9 +25,7 @@ class HuggingFaceAPIEmbeddingFunction(EmbeddingFunction):
 class VectorStoreManager:
     def __init__(self):
         # HuggingFace Embedding Function (100% Free & Local)
-        self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
-            model_name=config.FREE_EMBEDDING_MODEL
-        )
+        self.embedding_fn = HuggingFaceAPIEmbeddingFunction()
         # Persistent Local ChromaDB Instance
         self.client = chromadb.PersistentClient(path=str(config.CHROMADB_DIR))
         self.collection = self.client.get_or_create_collection(
