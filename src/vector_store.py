@@ -22,6 +22,10 @@ class HuggingFaceAPIEmbeddingFunction(EmbeddingFunction):
             raise Exception(f"Hugging Face API Error: {response.text}")
         return response.json()
 
+    def name(self) -> str:
+        # Match the persisted name expected by ChromaDB
+        return "sentence_transformer"
+
 class VectorStoreManager:
     def __init__(self):
         # HuggingFace Embedding Function (100% Free & Local)
