@@ -1,9 +1,9 @@
 --extra-index-url https://download.pytorch.org/whl/cpu
-torch==2.2.2
+torch>=2.5.0
 sentence-transformers>=2.5.0
 chromadb>=0.4.22
 pandas>=2.0.0
-numpy>=1.24.0
+numpy<2.0.0
 Flask>=3.0.0
 gunicorn>=21.2.0
 python-dotenv>=1.0.0
