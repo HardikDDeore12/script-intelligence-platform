@@ -2,6 +2,25 @@ import pandas as pd
 import chromadb
 from chromadb.utils import embedding_functions
 from src import config
+import os
+import requests
+from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
+
+class HuggingFaceAPIEmbeddingFunction(EmbeddingFunction):
+    def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
+        self.model_name = model_name
+        self.api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_name}"
+        self.headers = {"Authorization": f"Bearer {os.environ.get('HF_TOKEN')}"}
+
+    def __call__(self, input: Documents) -> Embeddings:
+        response = requests.post(
+            self.api_url,
+            headers=self.headers,
+            json={"inputs": input, "options": {"wait_for_model": True}}
+        )
+        if response.status_code != 200:
+            raise Exception(f"Hugging Face API Error: {response.text}")
+        return response.json()
 
 class VectorStoreManager:
     def __init__(self):
