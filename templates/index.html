@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Script Intelligence Platform | Studio Comps</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen font-sans">
+    
+    <!-- Navbar -->
+    <header class="border-b border-slate-800 bg-slate-950/50 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center font-bold text-lg">S</div>
+                <h1 class="text-xl font-bold tracking-tight text-white">Script Intelligence <span class="text-indigo-400">Platform</span></h1>
+            </div>
+            <span class="text-xs bg-indigo-500/10 text-indigo-400 px-3 py-1 rounded-full border border-indigo-500/20 font-medium">B2B Studio Analytics</span>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-6 py-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <!-- Left Column: Input Form -->
+        <section class="lg:col-span-5 space-y-6">
+            <div class="bg-slate-800/50 border border-slate-700/60 rounded-xl p-6 shadow-xl">
+                <h2 class="text-lg font-semibold mb-2 text-white">New Concept Analysis</h2>
+                <p class="text-sm text-slate-400 mb-4">Enter script summary or logline to fetch historical box-office benchmarks.</p>
+                
+                <form id="matchForm" class="space-y-4">
+                    <div>
+                        <label for="plot_summary" class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Plot Synopsis / Logline</label>
+                        <textarea id="plot_summary" name="plot_summary" rows="8" 
+                            class="w-full bg-slate-900/80 border border-slate-700 rounded-lg p-3 text-sm text-slate-200 focus:outline-none focus:border-indigo-500 transition shadow-inner placeholder-slate-500" 
+                            placeholder="Paste movie plot, story synopsis, or detailed scene breakdown here..." required></textarea>
+                    </div>
+
+                    <div>
+                        <label for="top_k" class="block text-xs font-medium text-slate-300 uppercase tracking-wider mb-2">Max Benchmark Matches (Top K)</label>
+                        <select id="top_k" name="top_k" class="w-full bg-slate-900/80 border border-slate-700 rounded-lg p-2.5 text-sm text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="3">Top 3 Movies</option>
+                            <option value="5" selected>Top 5 Movies</option>
+                            <option value="10">Top 10 Movies</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" id="submitBtn" 
+                        class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-medium py-3 rounded-lg transition shadow-lg shadow-indigo-600/20 flex items-center justify-center space-x-2">
+                        <span>Run Concept Matcher</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Right Column: Results Dashboard -->
+        <section class="lg:col-span-7 space-y-6">
+            
+            <!-- Default Placeholder -->
+            <div id="placeholderState" class="bg-slate-800/30 border border-dashed border-slate-700 rounded-xl p-12 text-center flex flex-col items-center justify-center min-h-[400px]">
+                <div class="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-slate-400 mb-3">🎬</div>
+                <h3 class="text-base font-medium text-slate-300">No Concept Analyzed Yet</h3>
+                <p class="text-xs text-slate-500 max-w-sm mt-1">Submit script details on the left panel to generate historical comparisons and financial ROI charts.</p>
+            </div>
+
+            <!-- Dashboard Output (Hidden Initially) -->
+            <div id="resultsDashboard" class="hidden space-y-6">
+
+                <!-- Executive Insights Card (Hidden dynamically if no insights) -->
+                <div id="executiveInsightsBox" class="bg-indigo-950/40 border border-indigo-500/30 rounded-xl p-5 mb-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Executive Recommendation</span>
+                        <span id="riskBadge" class="text-xs px-2.5 py-0.5 rounded-full font-medium bg-indigo-500/20 text-indigo-300">Analysis Pending</span>
+                    </div>
+                    <h4 id="execRecommendation" class="text-base font-bold text-white mb-1">--</h4>
+                    <p id="execTakeaway" class="text-xs text-slate-300">--</p>
+                </div>
+                
+                <!-- Financial Metrics Summary -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                        <span class="text-xs text-slate-400 block mb-1">Avg Budget</span>
+                        <span id="metricAvgBudget" class="text-xl font-bold text-white">$0M</span>
+                    </div>
+                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                        <span class="text-xs text-slate-400 block mb-1">Avg Worldwide Gross</span>
+                        <span id="metricAvgRevenue" class="text-xl font-bold text-emerald-400">$0M</span>
+                    </div>
+                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                        <span class="text-xs text-slate-400 block mb-1">Avg ROI</span>
+                        <span id="metricAvgRoi" class="text-xl font-bold text-indigo-400">0x</span>
+                    </div>
+                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                        <span class="text-xs text-slate-400 block mb-1">Historical Profitability</span>
+                        <span id="metricProfitabilityRate" class="text-xl font-bold text-emerald-300">0%</span>
+                        <span id="metricProfitabilityRatio" class="text-[10px] text-slate-400 block mt-0.5">(0/0 Comps Profitable)</span>
+                    </div>
+                    <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4">
+                        <span class="text-xs text-slate-400 block mb-1">Top Benchmark</span>
+                        <span id="metricTopMatch" class="text-sm font-semibold text-white truncate block">N/A</span>
+                    </div>
+                </div>
+
+                <!-- Financial Comparison Chart -->
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-6 shadow-xl">
+                    <h3 class="text-sm font-semibold text-white mb-4">Historical Financials: Budget vs. Revenue ($ Millions)</h3>
+                    <div class="h-64">
+                        <canvas id="compsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Match List Cards -->
+                <div class="space-y-4">
+                    <h3 class="text-sm font-semibold text-white uppercase tracking-wider text-slate-400">Comparable Movies (Comps)</h3>
+                    <div id="moviesList" class="space-y-3"></div>
+                </div>
+
+            </div>
+
+        </section>
+
+    </main>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
