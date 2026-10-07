@@ -4,44 +4,45 @@ from chromadb.utils import embedding_functions
 from src import config
 import os
 import requests
+import numpy as np
 from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
 
 class HuggingFaceAPIEmbeddingFunction(EmbeddingFunction):
     def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
         self.model_name = model_name
-        # Hugging Face Router URL
-        self.api_url = f"https://router.huggingface.co/hf-inference/models/{self.model_name}"
+        self.api_url = f"https://router.huggingface.co/hf-inference/models/{model_name}"
         self.headers = {
             "Authorization": f"Bearer {os.environ.get('HF_TOKEN')}",
             "Content-Type": "application/json"
         }
 
     def __call__(self, input: Documents) -> Embeddings:
-        # Feature extraction via Router API requires wrapping input documents
-        payload = {
-            "inputs": {
-                "source_sentence": input[0] if input else "",
-                "sentences": list(input)
-            },
-            "options": {"wait_for_model": True}
-        }
+        # Convert documents input safely
+        texts = list(input) if isinstance(input, (list, tuple)) else [input]
         
         response = requests.post(
             self.api_url,
             headers=self.headers,
-            json=payload,
+            json={"inputs": texts, "options": {"wait_for_model": True}},
             timeout=30
         )
-        
-        if response.status_code != 200:
-            # Direct feature extraction pipeline fallback if sentence similarity returns scores
-            payload_direct = {"inputs": list(input), "options": {"wait_for_model": True}}
-            response = requests.post(self.api_url, headers=self.headers, json=payload_direct, timeout=30)
 
         if response.status_code != 200:
-            raise Exception(f"Hugging Face API Error ({response.status_code}): {response.text}")
-            
-        return response.json()
+            print(f"Hugging Face API Error ({response.status_code}): {response.text}", flush=True)
+            raise Exception(f"HF API Error: {response.text}")
+
+        data = response.json()
+
+        # Handle nested 3D tensor responses [batch_size, seq_len, hidden_dim]
+        try:
+            arr = np.array(data)
+            if arr.ndim == 3:
+                # Token-level mean pooling to get 2D embeddings [batch_size, hidden_dim]
+                arr = np.mean(arr, axis=1)
+            return arr.tolist()
+        except Exception as e:
+            print(f"Embedding Parsing Error: {e}", flush=True)
+            return data
 
     def name(self) -> str:
         return "sentence_transformer"
