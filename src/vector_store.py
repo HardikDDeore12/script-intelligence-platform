@@ -9,23 +9,24 @@ from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
 class HuggingFaceAPIEmbeddingFunction(EmbeddingFunction):
     def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
         self.model_name = model_name
-        self.api_url = f"https://api-inference.huggingface.co/pipeline/feature-extraction/{model_name}"
+        # Updated Hugging Face router endpoint
+        self.api_url = f"https://router.huggingface.co/hf-inference/models/{model_name}"
         self.headers = {"Authorization": f"Bearer {os.environ.get('HF_TOKEN')}"}
 
     def __call__(self, input: Documents) -> Embeddings:
         response = requests.post(
             self.api_url,
             headers=self.headers,
-            json={"inputs": input, "options": {"wait_for_model": True}}
+            json={"inputs": input, "options": {"wait_for_model": True}},
+            timeout=30
         )
         if response.status_code != 200:
-            raise Exception(f"Hugging Face API Error: {response.text}")
+            raise Exception(f"Hugging Face API Error ({response.status_code}): {response.text}")
         return response.json()
 
     def name(self) -> str:
-        # Match the persisted name expected by ChromaDB
         return "sentence_transformer"
-
+    
 class VectorStoreManager:
     def __init__(self):
         # HuggingFace Embedding Function (100% Free & Local)
