@@ -9,19 +9,38 @@ from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
 class HuggingFaceAPIEmbeddingFunction(EmbeddingFunction):
     def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
         self.model_name = model_name
-        # Updated Hugging Face router endpoint
-        self.api_url = f"https://router.huggingface.co/hf-inference/models/{model_name}"
-        self.headers = {"Authorization": f"Bearer {os.environ.get('HF_TOKEN')}"}
+        # Hugging Face Router URL
+        self.api_url = f"https://router.huggingface.co/hf-inference/models/{self.model_name}"
+        self.headers = {
+            "Authorization": f"Bearer {os.environ.get('HF_TOKEN')}",
+            "Content-Type": "application/json"
+        }
 
     def __call__(self, input: Documents) -> Embeddings:
+        # Feature extraction via Router API requires wrapping input documents
+        payload = {
+            "inputs": {
+                "source_sentence": input[0] if input else "",
+                "sentences": list(input)
+            },
+            "options": {"wait_for_model": True}
+        }
+        
         response = requests.post(
             self.api_url,
             headers=self.headers,
-            json={"inputs": input, "options": {"wait_for_model": True}},
+            json=payload,
             timeout=30
         )
+        
+        if response.status_code != 200:
+            # Direct feature extraction pipeline fallback if sentence similarity returns scores
+            payload_direct = {"inputs": list(input), "options": {"wait_for_model": True}}
+            response = requests.post(self.api_url, headers=self.headers, json=payload_direct, timeout=30)
+
         if response.status_code != 200:
             raise Exception(f"Hugging Face API Error ({response.status_code}): {response.text}")
+            
         return response.json()
 
     def name(self) -> str:
