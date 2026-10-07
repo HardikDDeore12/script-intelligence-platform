@@ -10,38 +10,61 @@ from chromadb.api.types import EmbeddingFunction, Documents, Embeddings
 class HuggingFaceAPIEmbeddingFunction(EmbeddingFunction):
     def __init__(self, model_name="sentence-transformers/all-MiniLM-L6-v2"):
         self.model_name = model_name
+        # Hugging Face Router URL
         self.api_url = f"https://router.huggingface.co/hf-inference/models/{model_name}"
         self.headers = {
             "Authorization": f"Bearer {os.environ.get('HF_TOKEN')}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
+            "x-use-cache": "false"
         }
 
     def __call__(self, input: Documents) -> Embeddings:
-        # Convert documents input safely
         texts = list(input) if isinstance(input, (list, tuple)) else [input]
         
+        # 1. Direct feature extraction payload
+        payload = {
+            "inputs": texts,
+            "options": {"wait_for_model": True}
+        }
+
         response = requests.post(
             self.api_url,
             headers=self.headers,
-            json={"inputs": texts, "options": {"wait_for_model": True}},
+            json=payload,
             timeout=30
         )
 
+        # 2. If HF routes to SentenceSimilarity pipeline by default, fallback to feature-extraction payload format
+        if response.status_code != 200 and "SentenceSimilarityPipeline" in response.text:
+            similarity_payload = {
+                "inputs": {
+                    "source_sentence": texts[0] if texts else "",
+                    "sentences": texts
+                },
+                "options": {"wait_for_model": True}
+            }
+            response = requests.post(
+                self.api_url,
+                headers=self.headers,
+                json=similarity_payload,
+                timeout=30
+            )
+
         if response.status_code != 200:
-            print(f"Hugging Face API Error ({response.status_code}): {response.text}", flush=True)
-            raise Exception(f"HF API Error: {response.text}")
+            raise Exception(f"HF API Error ({response.status_code}): {response.text}")
 
         data = response.json()
 
-        # Handle nested 3D tensor responses [batch_size, seq_len, hidden_dim]
+        # 3. Handle 3D output arrays (tokens level) to convert to 2D vector array for ChromaDB
         try:
             arr = np.array(data)
             if arr.ndim == 3:
-                # Token-level mean pooling to get 2D embeddings [batch_size, hidden_dim]
+                # Mean pooling over token dimension -> 2D (batch_size, embedding_dim)
                 arr = np.mean(arr, axis=1)
+            elif arr.ndim == 1:
+                arr = [arr.tolist()]
             return arr.tolist()
-        except Exception as e:
-            print(f"Embedding Parsing Error: {e}", flush=True)
+        except Exception:
             return data
 
     def name(self) -> str:
