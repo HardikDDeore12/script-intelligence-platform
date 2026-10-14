@@ -1,8 +1,7 @@
 from flask import Flask, render_template, request, jsonify
 from src.matcher_engine import MatcherEngine
 from src.llm_analyzer import NarrativeAnalyzer  # <-- Import Analyzer
-import os
-import gradio as gr
+
 app = Flask(__name__)
 
 matcher = MatcherEngine()
@@ -42,15 +41,4 @@ def match_script():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host="0.0.0.0", port=port, debug=False)
-
-# Gradio wrapper interface to host Flask on HF Space
-demo = gr.Blocks()
-
-# Mount Flask app to Gradio
-app = gr.mount_gradio_app(app, demo, path="/")
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=7860)
+    app.run(host="0.0.0.0", port=5000, debug=True)
