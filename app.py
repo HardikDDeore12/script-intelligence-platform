@@ -1,7 +1,11 @@
 from flask import Flask, render_template, request, jsonify
 from src.matcher_engine import MatcherEngine
 from src.llm_analyzer import NarrativeAnalyzer  # <-- Import Analyzer
+<<<<<<< HEAD
 
+=======
+import os
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3
 app = Flask(__name__)
 
 matcher = MatcherEngine()
@@ -41,4 +45,9 @@ def match_script():
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == "__main__":
+<<<<<<< HEAD
     app.run(host="0.0.0.0", port=5000, debug=True)
+=======
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port, debug=False)
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3

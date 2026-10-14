@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 Flask>=3.0.0
 gunicorn>=21.2.0
 pandas>=2.0.0
 numpy>=1.24.0
 sentence-transformers>=2.5.0
 chromadb>=0.4.22
+=======
+chromadb>=0.4.22
+sentence-transformers>=2.2.2
+torch--extra-index-url https://download.pytorch.org/whl/cpu
+pandas>=2.0.0
+numpy<2.0.0
+Flask>=3.0.0
+gunicorn>=21.2.0
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3
 python-dotenv>=1.0.0
 requests>=2.31.0
 tqdm>=4.66.0

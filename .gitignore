@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 .env
 venv/
 __pycache__/
@@ -5,3 +6,11 @@ __pycache__/
 .chroma/
 chroma_db/
 .ds_store
+=======
+venv/
+__pycache__/
+*.pyc
+.env
+data/raw/
+.DS_Store
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3

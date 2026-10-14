@@ -5,10 +5,18 @@ from src import config
 
 class VectorStoreManager:
     def __init__(self):
+<<<<<<< HEAD
         # HuggingFace Embedding Function (100% Free & Local)
         self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
             model_name=config.FREE_EMBEDDING_MODEL
         )
+=======
+        # Direct local SentenceTransformer (No Hugging Face API dependency)
+        self.embedding_fn = embedding_functions.SentenceTransformerEmbeddingFunction(
+            model_name="all-MiniLM-L6-v2"
+        )
+        
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3
         # Persistent Local ChromaDB Instance
         self.client = chromadb.PersistentClient(path=str(config.CHROMADB_DIR))
         self.collection = self.client.get_or_create_collection(
@@ -18,19 +26,30 @@ class VectorStoreManager:
         )
 
     def index_dataset(self, csv_path=None):
+<<<<<<< HEAD
         """Dataset se plot descriptions ko vector database mein add karna"""
+=======
+        """Dataset se plot descriptions ko vector database me add karna"""
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3
         if csv_path is None:
             csv_path = config.MASTER_DATASET_PATH
 
         df = pd.read_csv(csv_path)
+<<<<<<< HEAD
         print(f"🚀 Indexing {len(df)} movies into local Vector DB...")
+=======
+        print(f"Indexing {len(df)} movies into local Vector DB...")
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3
 
         documents = []
         metadatas = []
         ids = []
 
         for idx, row in df.iterrows():
+<<<<<<< HEAD
             # Vector representation ke liye plot aur metadata combine kar rahe hain
+=======
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3
             text_to_embed = f"Title: {row['title']}. Director: {row['director']}. Plot: {row['plot_summary']}"
             
             documents.append(text_to_embed)
@@ -44,7 +63,12 @@ class VectorStoreManager:
                 "budget": float(row['budget']),
                 "revenue_worldwide": float(row['revenue_worldwide']),
                 "roi": float(row['roi']),
+<<<<<<< HEAD
                 "plot_summary": str(row['plot_summary'])[:500]  # First 500 chars snippet
+=======
+                "plot_summary": str(row['plot_summary'])[:500],
+                "poster_path": str(row.get('poster_path', ''))
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3
             })
 
             # Batch upsert every 500 items
@@ -63,10 +87,17 @@ class VectorStoreManager:
                 ids=ids
             )
 
+<<<<<<< HEAD
         print("🎉 Successfully indexed all movies locally!")
 
     def search_similar(self, query_plot: str, top_k: int = 5) -> list[dict]:
         """Query plot summary ke liye top-K similar benchmark movies find karna"""
+=======
+        print("Successfully indexed all movies locally!")
+
+    def search_similar(self, query_plot: str, top_k: int = 5) -> list[dict]:
+        """Query plot summary ke liye top K similar benchmark movies find karna"""
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3
         results = self.collection.query(
             query_texts=[query_plot],
             n_results=top_k
@@ -78,7 +109,10 @@ class VectorStoreManager:
             distances = results["distances"][0] if "distances" in results else [0]*len(metas)
 
             for meta, dist in zip(metas, distances):
+<<<<<<< HEAD
                 # Cosine distance to similarity percentage conversion
+=======
+>>>>>>> fa8d1c5ec4cb2aeeab898699b712e390e53348b3
                 similarity_score = round(max(0, (1 - dist)) * 100, 2)
                 meta["similarity_score"] = similarity_score
                 matches.append(meta)
